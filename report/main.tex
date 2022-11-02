@@ -1,0 +1,154 @@
+% \documentclass[preprint,12pt]{elsarticle}
+
+%% Use the option review to obtain double line spacing
+%% \documentclass[authoryear,preprint,review,12pt]{elsarticle}
+
+%% Use the options 1p,twocolumn; 3p; 3p,twocolumn; 5p; or 5p,twocolumn
+%% for a journal layout:
+\documentclass[final,1p]{elsarticle}
+%% \documentclass[final,1p,times,twocolumn]{elsarticle}
+% \documentclass[final,3p,times]{elsarticle}
+% \documentclass[final,3p,times,twocolumn]{elsarticle}
+% \documentclass[final,5p,times]{elsarticle}
+%% \documentclass[final,5p,times,twocolumn]{elsarticle}
+
+%% For including figures, graphicx.sty has been loaded in
+%% elsarticle.cls. If you prefer to use the old commands
+%% please give \usepackage{epsfig}
+
+%% The amssymb package provides various useful mathematical symbols
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{hyperref}
+
+\usepackage{minted} % First pip install pygments
+\setminted{breaklines, framesep=2mm, fontsize=\footnotesize, numbersep=5pt}
+
+%% The amsthm package provides extended theorem environments
+\usepackage{amsthm}
+
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers.
+%% \usepackage{lineno}
+
+\journal{Github}
+
+\newtheorem{remark}{\bf Remark}[section]
+% Color codes
+\newcommand{\red}[1]{{\color{red}  #1}}
+\newcommand{\blue}[1]{{\color{blue}  #1}}
+\newcommand{\green}[1]{{\color{green}  #1}}
+
+\begin{document}
+
+\begin{frontmatter}
+
+%% Title, authors and addresses
+
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for theassociated footnote;
+%% use the fnref command within \author or \address for footnotes;
+%% use the fntext command for theassociated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for theassociated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page:
+%% \title{Title\tnoteref{label1}}
+%% \tnotetext[label1]{}
+%% \author{Name\corref{cor1}\fnref{label2}}
+%% \ead{email address}
+%% \ead[url]{home page}
+%% \fntext[label2]{}
+%% \cortext[cor1]{}
+%% \affiliation{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+%% \fntext[label3]{}
+
+\title{
+BBB-FLIDS Project Report\\
+{\small Blockchain-Based Federated Learning for Intrusion Detection}
+}
+
+%% use optional labels to link authors explicitly to addresses:
+%% \author[label1,label2]{}
+%% \affiliation[label1]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+%%
+%% \affiliation[label2]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+
+\author{İlker Işık}
+\ead{iiilker99@gmail.com}
+%\affiliation[inst1]{organization={2380517}}
+%,
+%            addressline={Address One}, 
+%            city={City One},
+%            postcode={00000}, 
+%            state={State One},
+%            country={Country One}}
+
+
+\begin{abstract}
+In this project, I implemented a federated-learning intrusion detection system based on blockchain technology, which becomes increasingly more common in the modern world.
+Since I designed a machine learning based intrusion detection system instead of a signature based one, this system has the potential to detect new attack types.
+Federated learning approach allows us to ensure the privacy of the sensitive data while learning from it, and leverage the large amounts of data distributed in the client devices.
+I used the federated averaging approach in conjunction with a custom preprocessing stage for data standardization.
+By combining blockchain and federated learning, I created a fully open and decentralized learning system in order to overcome novel security challenges.
+\end{abstract}
+
+
+\begin{keyword}
+%% keywords here, in the form: keyword \sep keyword
+Machine Learning \sep Federated Learning \sep Blockchain
+\end{keyword}
+
+\end{frontmatter}
+
+%% \linenumbers
+
+\input{sections/01-intro}
+\input{sections/02-related-work}
+\input{sections/03-methodology}
+\input{sections/04-results}
+\input{sections/05-conclusion}
+
+%% The Appendices part is started with the command \appendix;
+%% appendix sections are then done as normal sections
+% \appendix
+% \section{Sample Appendix Section}
+
+%% If you have bibdatabase file and want bibtex to generate the
+%% bibitems, please use
+%%
+\bibliographystyle{elsarticle-num} 
+\bibliography{bib.bib}
+
+%% else use the following coding to input the bibitems directly in the
+%% TeX file.
+
+% \begin{thebibliography}{00}
+
+% %% \bibitem{label}
+% %% Text of bibliographic item
+
+% \bibitem{}
+
+% \end{thebibliography}
+\end{document}
+\endinput
+%%
+%% End of file `elsarticle-template-num.tex'.

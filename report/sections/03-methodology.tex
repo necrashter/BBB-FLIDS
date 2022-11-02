@@ -1,0 +1,254 @@
+
+\section{Methodology}
+
+\subsection{Machine Learning Model}
+
+I decided to work with neural networks in this project due to their flexibility.
+The architecture of the neural network can be customized easily with a simple yet expressive configuration system.
+In the results section, I will test the accuracy of the algorithm with different configurations.
+The last layer will always have $L$ neurons, outputting the confidence values for $L$ classes.
+After that, cross-entropy loss function is used to compare against the ground truth.
+
+I used horizontal federated learning, i.e., all clients have different training samples with the same feature space, because I believe this is a more common use case in practical applications.
+
+The core federated learning idea is presented in \cite{comef-FL}, which is one of the most influential papers in this field.
+In this paper, the authors advocate a learning strategy in which the clients make local updates to the model, and the server averages these updates to finalize a round.
+This process is called \textit{federated averaging}.
+The overall strategy resembles stochastic gradient descent.
+
+Let $w^k_t$ denote the model parameters for client $k$ at time $t$.
+Similarly, $w_t$ denotes the global model parameters.
+At each round, the clients perform a local update on their weights individually:
+\begin{equation}
+    w^k_{t+1} \leftarrow w^k_{t} - \eta \triangledown l(w^k_t)
+\end{equation}
+where $\eta$ is the learning rate, $l$ the loss function (computed on the local dataset), and $\triangledown l$ is its gradient w.r.t model parameters.
+Since the updates done by each client are independent from each other, they can easily work in parallel.
+Furthermore, each client can perform this parameter update step multiple times.
+A single pass through the local dataset is termed \textit{local epoch}.
+%This number is represented by the hyperparameter $E$, also known as the local epoch.
+
+Instead of doing local updates with all clients at each round, the authors of \citep{comef-FL} introduce another hyperparameter $C$, and only perform local updates in $C$-fraction of clients at each round.
+$C$ acts a bit like a global batch size in this case; $C = 1$ means all clients perform updates, therefore all of the data is utilized at each round, with smaller $C$ values reducing this amount.
+The impact of changing $C$ will be evaluated in the results section.
+
+After the local updates are completed, server averages them in order to update the global model parameters:
+\begin{equation}
+    w_{t+1} = \sum_{k=1}^K \frac{n_k}{n} w^k_{t+1}
+\end{equation}
+where $n_k$ is the amount of local data in $k$th client, and $n$ is the total, i.e., $n = \sum_{k=1}^K n_k$.
+$K$ represents the total number of clients.
+This concludes a single round of federated learning.
+In the following round, the clients will fetch the averaged global model and perform gradient descent on it again.
+
+I chose \verb|pytorch| and \verb|numpy| libraries to implement this machine learning model in Python because of my pre-existing familiarity with these tools.
+To read the dataset, I used \verb|pandas| library.
+\verb|sklearn| is also used for some preprocessing steps (e.g. converting categorical data to one-hot vectors).
+
+
+
+\subsection{Data Standardization}
+
+With \textit{data standardization}, I refer to the preprocessing step in which we eliminate the varying means and standard deviations of different features in the dataset.
+This process is particularly important when the features have wildly different scales, e.g., one feature has a mean of $10000$ and the other $0.001$.
+In fact, data standardization is deemed ``necessary" when a non-linear activation function is utilized \citep{standardizationANN}.
+Intuitively, non-standardized values are less likely to trigger the non-linear response of an activation function, e.g., ReLU is linear for all positive numbers.
+
+In a regular machine learning application, we usually remove the mean and divide the result by the standard deviation for each feature.
+In literature, this is commonly known as Z-score:
+\begin{equation}
+    z = \frac{x - \mu}{\sigma}
+\end{equation}
+
+Unfortunately, data standardization is not studied in the federated learning paper \cite{comef-FL}, presumably because it mainly targets image data, which is already normalized.
+Likewise, I failed to find any research about this issue in the literature.
+However, standardization is a crucial step in this application, as I will demonstrate in results section.
+Moreover, I aimed to make this project more general-purpose by not making any assumptions about the data.
+
+My solution to data standardization in federated learning is based on the local update and general averaging steps explained in the previous section.
+Before the training process starts, server and clients participate in 2 sequential preprocessing stages for data standardization, one for mean and the other for standard deviation.
+
+Similar to the local update step, the clients report their local means to the server first, $\mu_k$ for each client $k$, alongside their data size $n_k$.
+After that, the overall mean is computed by the server using the formula:
+\begin{equation}
+    \mu = \frac{\sum_{k=1}^K n_k \mu_k}{n}
+\end{equation}
+This computed $\mu$ will be used by all clients to standardize their data.
+A similar process is carried out for standard deviation.
+An important detail is that each client uses the global $\mu$ while computing their local standard deviation instead of the local $\mu_k$. 
+\begin{align}
+    \sigma_k & = \sqrt{\frac{\sum_{i=1}^{n_k} (x_i - \mu)^2}{n_k}} \\
+    \sigma & = \sqrt{\frac{\sum_{k=1}^{K} n_k \sigma_k^2}{n}}
+\end{align}
+
+Also note that these two standardization steps must be done for each feature.
+However, thanks to vectorized operations, this does not require a separate pass for each feature.
+In practice, $\mu$, $\mu_k$, $\sigma$ and $\sigma_k$ are actually vectors of values computed for all features, e.g., $\mu_k = [\mu_{k, 1}, \mu_{k,2}, \ldots]$.
+
+
+\subsubsection{Impact on Privacy}
+
+One of the primary motivations for federated learning is to preserve the privacy of sensitive data, which is achieved by performing the updates locally and averaging them.
+A stochastic gradient descent update tells very little about the training data.
+However, the mean and standard deviation preprocessing steps I introduced require the clients to send the means and standard deviations of their local data, which arguably exposes more sensitive information compared to gradient descent updates.
+
+Similar to how only a fraction of clients participate in each round of gradient descent, we can limit the participation to volunteers in these 2 preprocessing stages.
+We will call this fraction $C_{pre}$.
+With this approach, $\mu$ and $\sigma$ values we compute will not be exactly correct, but they will provide a reasonable estimate which is adequate in most cases.
+
+Furthermore, in real life, dataset sizes of different clients are unlikely to be the same.
+When a client hoards a large amount of data, they will have less privacy concerns about sharing the mean and standard deviation information, because these values tell a lot less about the individual data samples when the dataset size is large.
+This is quite convenient for us, since $\mu_k$ and $\sigma_k$ values shared by these clients also have a larger impact on the global $\mu$ and $\sigma$.
+
+An alternative solution is simply to ditch the standardization for the sake of privacy.
+I will investigate the effect of this choice in the results section.
+
+
+\subsection{Blockchain}
+
+My primary target blockchain is Ethereum due to its popularity and good tooling support.
+Consequently, I chose the Solidity programming language for the smart contract.
+
+For interacting with the Ethereum blockchain, \verb|web3.py| library provides a clean Python interface.
+Since it would be quite costly to run this project on the real Ethereum network, I made use of \verb|eth-tester| tool suite to run the project.
+
+Furthermore, I implemented this blockchain platform in a modular manner.
+In code, \verb|EthPlatform| module is responsible for communicating with the Ethereum ecosystem, which can easily be replaced due to this flexible structure.
+For example, I provide a \verb|DummyPlatform| module which can emulate the functions of the previous module without interacting with an actual blockchain.
+This allows us to bypass the run-time performance cost of blockchain.
+Besides, this module can be beneficial to the users who want to test only the federated learning part without installing any blockchain libraries.
+
+In Solidity, the state of the model is represented as bytes, which is obtained by combining all parameters of the model in IEEE 754 floating point representation and getting the corresponding byte representation.
+Afterwards, we can use this byte data by interpreting the byte buffer as an array with correst data type and shape.
+Figure \ref{fig:modelBytes} demonstrates this in Python.
+
+\begin{figure}[h]
+    \begin{minted}{python}
+    # Model to bytes
+    bytestr = b''
+    for param in model1.parameters():
+        bytestr += param.detach().numpy().tobytes()
+    
+    # Bytes to model
+    for param in model2.parameters():
+        arr = param.detach().numpy()
+        arr[:] = np.frombuffer(bytestr[:arr.nbytes], dtype=arr.dtype).reshape(arr.shape)
+        bytestr = bytestr[arr.nbytes:]
+    \end{minted}
+    \caption{Representing the model as bytes in Python}
+    \label{fig:modelBytes}
+\end{figure}
+
+The global model is stored as a property in the contract, as well as mean and standard deviation data.
+The local counterparts of these are handled by events in Solidity (Figure \ref{fig:flsol}, which are more appropriate for this use case.
+This design decision also reduces the gas fee paid by the clients.
+
+\begin{figure}[h]
+    \begin{minted}{lexer.py:SolidityLexer -x}
+    // Representation of the global model in bytes.
+    bytes public model;
+    // For data standardization, global means and stds.
+    bytes public means;
+    bytes public stds;
+
+    // This event is fired when a client reports a local update.
+    event LocalUpdate(address indexed from, uint epoch, 
+                                    uint size, bytes model);
+    // These events are fired during the preprocessing stage
+    // by the clients.
+    event LocalMeans(address indexed from, uint size, bytes data);
+    event LocalStds(address indexed from, uint size, bytes data);
+    \end{minted}
+    \caption{FL Data in Solidity}
+    \label{fig:flsol}
+\end{figure}
+
+Another option would be to allow the clients to send their local updates to the server outside the blockchain.
+Some clients may prefer this, since Ethereum (or most open blockchains in general) provides very limited privacy \citep{Tikhomirov2017EthereumSO}.
+This is still possible with this setup, with some clients communicating through blockchain and others outside.
+An advantage of all-blockchain approach is that others can verify whether the server carried out the model averaging correctly.
+
+
+It's important to make sure that only the server (the contract owner in Solidity) performs the global updates.
+To this end, a modifier called \verb|OwnerOnly| is implemented.
+Relevant parts of the code are given in Figure \ref{fig:owneronly}.
+This might seem to create a single point of failure, but since the transactions are in the blockchain, anyone can take the latest (or a previous) version of the model and create a new contract.
+
+\begin{figure}[h]
+    \begin{minted}{lexer.py:SolidityLexer -x}
+contract FederatedLearningContract {
+    address public owner;
+    constructor() public {
+        owner = msg.sender;
+        // ...
+    }
+
+    // With this modifier, only owner can call the given function.
+    modifier OwnerOnly() {
+        require(msg.sender == owner, "Only the contract owner can call this function!");
+        _;
+    }
+
+    // Note that public modifier in Solidity does not limit the access to the owner.
+    function globalUpdate(bytes memory updatedModel) public OwnerOnly {
+        // ...
+    }
+}
+    \end{minted}
+    \caption{Owner Only modifier in Solidity}
+    \label{fig:owneronly}
+\end{figure}
+
+
+Enums are used to keep track of the stage of training (Fig. \ref{fig:stages}.
+By sending global mean/standard deviation data and updates, the server orchestrates the training process.
+
+\begin{figure}[h]
+    \begin{minted}{lexer.py:SolidityLexer -x}
+contract FederatedLearningContract {
+    // Enum representing current stage of the federated learning model
+    enum Stage{ PREPROCESS_MEANS, PREPROCESS_STDS, TRAINING }
+    Stage public stage;
+    
+    constructor() public {
+        // ...
+        stage = Stage.PREPROCESS_MEANS;
+    }
+
+    function localMeans(uint size, bytes memory data) public {
+        require(stage == Stage.PREPROCESS_MEANS, "Can only be called in means preprocessing stage!");
+        emit LocalMeans(msg.sender, size, data);
+    }
+    
+    function globalMeans(bytes memory data) public OwnerOnly {
+        require(stage == Stage.PREPROCESS_MEANS, "Can only be called in means preprocessing stage!");
+        means = data;
+        // Advance stage
+        stage = Stage.PREPROCESS_STDS;
+    }
+    
+    // Similar for other functions
+}
+    \end{minted}
+    \caption{Training Stages in Sol}
+    \label{fig:stages}
+\end{figure}
+
+
+For the sake of simplicity, I only focused on implementing the learning system on the blockchain and disregarded other transactions that may happen between the clients and the server.
+However, it's almost trivial to implement such additional features since the foundational blockchain-based federated learning system is in-place.
+For instance, the server may pay the clients for local updates and local $\mu_k$ and $\sigma_k$ reports.
+This will compensate them for the privacy concerns and create a financial incentive to participate more in the training.
+
+
+\subsection{FL on Blockchain}
+
+There are unique set of problems that arise when using FL on blockchain.
+The most important one is the gas fees associated with storing byte data on blockchain, which not only incentivize us to build smaller models, but also enforce a limit to the maximum model size we can reasonably build and train.
+
+To tackle this problem, I added the option to change the precision level of the model stored on the blockchain, and this is separate from the internal representation.
+Therefore, the client can use high-precision double floating points numbers while computing the local updates and send the results to the blockchain in 32-bit or even 16-bit floating point form.
+This option significantly reduces the gas fees during training.
+
+There are already numerous reasons to keep the model size small in machine learning, such as preventing over-fitting and faster training times.
+With FL on blockchain, financial incentive is added to that list of reasons.

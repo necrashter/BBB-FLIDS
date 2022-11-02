@@ -1,0 +1,19 @@
+
+\section{Related Work}
+
+Performance comparison of different FL algorithms are carried out in \cite{FLperf}, and federated averaging attained the highest accuracy.
+However, it has also been shown that FL suffers when the data is non-IID (non-Independent and identically Distributed).
+To overcome this, \cite{FL-HC} proposes a hierarchical clustering idea.
+
+A fairly comprehensive literature survey about FL for intrusion detection systems (IDS) is provided in \cite{FLforIDSsurvey}.
+A more general survey is given in \cite{IDSusingMLsurvey}, concerning IDS using machine learning.
+These papers also provide lots of background information on IDS, which I will omit for the sake of brevity.
+
+When the training data is scarce, anomaly detection systems deliver lots of false positives and exhibit bad performance overall.
+Federated learning enables us to leverage the private data distributed in numerous devices without sharing the data directly.
+For example, in the collaborative IDS presented in \cite{ColabIDS}, FL is employed in combination with a semi-supervised learning algorithm to mitigate the data scarcity issues.
+Similarly, in \cite{FLwirelessIDS}, the privacy-preserving properties of FL are exploited in order to preserve sensitive data during model training.
+
+Furthermore, due to its simplicity, federated learning offers an elegant and flexible framework for building unique machine learning applications.
+A single deep neural network is trained for multiple IDS tasks in \cite{mt-dnn-fl} using FL, which even surpassed some models dedicated to a single task.
+An example of using blockchain in combination with machine learning is given in \cite{dbf}, which presents a Deep Blockchain Framework for collaborative IDS.

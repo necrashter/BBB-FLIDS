@@ -1,0 +1,12 @@
+
+\section{Introduction}
+With the rapid increase in computing power, machine learning (ML) became a technique applied to almost every problem that satisfies the condition of having the necessary amount of data. In many ML applications, massive amount of user data is collected to train the ML model and get highly accurate results. Most of the applications store user data in their servers; however, this approach has problems in the sense that collecting massive amount of data is costly in terms of computation and network resources, and the collected data may include sensitive information of users, who may hesitate to share that information.
+
+Most of the intrusion detection systems use well-known signatures of the attack vectors while classifying malicious users according to their actions. Although this approach might work well for attack vectors which are previously investigated by cyber-security experts, it cannot accurately detect new attack vectors, such as zero day attacks. In order to address this problem, statistics or ML based approaches are used, namely anomaly-based intrusion detection systems. As explained above, ML based IDS require training data from users and thus have problems about privacy.
+
+A new ML model called federated learning was developed in order to solve problems previously explained. Federated learning (FL) is a technique where multiple clients, each having their own private data, cooperate in order to train a machine learning model \citep{bcflsurvey}.
+%Clients make local updates to the model using their private data, and these updates are then combined to obtain a global model, without requiring sharing of the data.
+Horizontal FL uses different samples with the same feature space and characteristics in each client.
+Whereas in vertical FL, clients use the same samples with different feature space during local training.
+
+Although FL models solve privacy related problems mentioned above, it still uses a centralized server for storing the learning results. Therefore, it is susceptible to single point of failure. In order to solve this issue, a blockchain based FL system is developed so that the system has more distributed structure and the security of the system is improved.
