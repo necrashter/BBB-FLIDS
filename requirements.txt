@@ -1,0 +1,10 @@
+pip
+web3
+eth-tester[py-evm]
+py-solc-x
+numpy
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch
+sklearn
+pandas
+tqdm
